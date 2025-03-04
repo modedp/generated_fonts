@@ -409,13 +409,20 @@ function event.new(t)
 	return self;
 end;
 
-local settings = {};
+local setting = {};
 
-function settings.new(fontModule, attached, child)
-	local self = setmetatable({}, {__index = settings});
+function setting.new(fontModule, attached, child)
+	local self = {};
+	self.__index = self
+	function self:preload()
+		for _, atlas in next, self.atlases do
+			content:Preload(atlas);
+		end;
+	end
+	self = setmetatable(self,self)
 	
-	settings.child = child;
-	settings.attached = attached;
+	self.child = child;
+	self.attached = attached;
 	
 	-- place data in new format for easy access
 	self.information = fontModule.font.information;
@@ -478,13 +485,6 @@ function settings.new(fontModule, attached, child)
 	
 	return self;
 end;
-
-function settings:preload()
-	for _, atlas in next, self.atlases do
-		content:Preload(atlas);
-	end;
-end;
-
 -- custom font class (this is what the player interacts with)
 
 local customFont = {};
@@ -497,7 +497,7 @@ function customFont.new(fontName, class, isButton, style)
 	local fontModule = fonts:FindFirstChild(fontName);
 	--local folder = instance("Folder", child);
 	
-	local settings = settings.new(require(fontModule), self, child);
+	local settings = setting.new(require(fontModule), self, child);
 	settings:preload();
 	
 	local events = {};
@@ -563,7 +563,7 @@ function customFont.new(fontName, class, isButton, style)
 	
 	self:connect("FontName", function(value)
 		local fontModule = fonts:FindFirstChild(value);
-		settings = settings.new(require(fontModule), self, child);
+		settings = setting.new(require(fontModule), self, child);
 		settings:preload();
 		propertyobjects["FontName"].Value = value;
 		if (not child.TextScaled) then
